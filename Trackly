@@ -1,0 +1,242 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trackly</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #4a90e2, #50c9c3);
+      color: #fff;
+      overflow-x: hidden;
+    }
+    header {
+      text-align: center;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .container {
+      width: 90%;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .card {
+      background: rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      backdrop-filter: blur(10px);
+    }
+    input, button, textarea {
+      border-radius: 10px;
+      border: none;
+      padding: 0.7rem 1rem;
+      font-size: 1rem;
+      margin: 0.5rem 0;
+    }
+    button {
+      background: #50c9c3;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    #signup, #dashboard {
+      display: none;
+    }
+    .reaction {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,0.9);
+      color: #333;
+      padding: 2rem;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+      display: none;
+      animation: pop 0.5s ease;
+    }
+    @keyframes pop {
+      0% {transform: scale(0.8) translate(-50%, -50%); opacity: 0;}
+      100% {transform: scale(1) translate(-50%, -50%); opacity: 1;}
+    }
+    .progress-bar {
+      background: rgba(255,255,255,0.3);
+      border-radius: 10px;
+      height: 20px;
+      width: 100%;
+      margin: 0.5rem 0;
+      overflow: hidden;
+    }
+    .progress-fill {
+      background: #00ffb9;
+      height: 100%;
+      width: 0%;
+      border-radius: 10px;
+      transition: width 0.5s ease;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Trackly</h1>
+    <p>Your daily motivation & habit tracker</p>
+  </header>  <div class="container" id="signup">
+    <div class="card">
+      <h2>Sign Up / Log In</h2>
+      <input type="text" id="username" placeholder="Enter username" />
+      <input type="password" id="password" placeholder="Enter password" />
+      <button onclick="signup()">Continue</button>
+    </div>
+  </div>  <div class="container" id="dashboard">
+    <div class="card">
+      <h2>Progress Overview</h2>
+      <p>Streak: <span id="streakCount">0</span> 🔥</p>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div><div class="card">
+  <h2>Exercise Tracker</h2>
+  <label><input type="checkbox" id="exerciseDone"> Completed today's exercise</label><br>
+  <button onclick="markComplete('exercise')">Mark Complete</button>
+</div>
+
+<div class="card">
+  <h2>Water Intake</h2>
+  <p>Glasses: <span id="waterCount">0</span></p>
+  <button onclick="addWater()">+1 Glass</button>
+  <button onclick="resetWater()">Reset</button>
+</div>
+
+<div class="card">
+  <h2>Notepad</h2>
+  <textarea id="notepad" rows="5" placeholder="Write your notes..."></textarea>
+  <button onclick="saveNote()">Save</button>
+  <button onclick="clearNote()">Clear</button>
+</div>
+
+<div class="card">
+  <h2>Motivational Quote</h2>
+  <p id="quote">Click below for motivation!</p>
+  <button onclick="newQuote()">New Quote</button>
+</div>
+
+  </div>  <div id="reaction" class="reaction">🎉 Great job! Keep it up! 💪</div>  <script>
+    const signupDiv = document.getElementById('signup');
+    const dashDiv = document.getElementById('dashboard');
+    const reaction = document.getElementById('reaction');
+
+    const savedUser = localStorage.getItem('tracklyUser');
+    if (!savedUser) {
+      signupDiv.style.display = 'block';
+    } else {
+      dashDiv.style.display = 'block';
+    }
+
+    function signup() {
+      const user = document.getElementById('username').value;
+      const pass = document.getElementById('password').value;
+      if (user && pass) {
+        localStorage.setItem('tracklyUser', user);
+        localStorage.setItem('tracklyPass', pass);
+        signupDiv.style.display = 'none';
+        dashDiv.style.display = 'block';
+      } else {
+        alert('Please fill in both fields');
+      }
+    }
+
+    function showReaction(msg) {
+      reaction.innerHTML = msg;
+      reaction.style.display = 'block';
+      setTimeout(() => {reaction.style.display = 'none';}, 2000);
+    }
+
+    // Exercise & Progress
+    function markComplete(type) {
+      if (type === 'exercise') {
+        localStorage.setItem('exerciseDone', 'true');
+        updateProgress();
+        showReaction('🏋️ You completed your workout! Great job!');
+      }
+    }
+
+    // Water Tracker
+    let waterCount = parseInt(localStorage.getItem('waterCount')) || 0;
+    document.getElementById('waterCount').innerText = waterCount;
+
+    function addWater() {
+      waterCount++;
+      localStorage.setItem('waterCount', waterCount);
+      document.getElementById('waterCount').innerText = waterCount;
+      if (waterCount % 8 === 0) showReaction('💧 Hydration hero! You hit your goal!');
+      updateProgress();
+    }
+
+    function resetWater() {
+      waterCount = 0;
+      localStorage.setItem('waterCount', 0);
+      document.getElementById('waterCount').innerText = 0;
+      updateProgress();
+    }
+
+    // Notepad
+    const notepad = document.getElementById('notepad');
+    notepad.value = localStorage.getItem('tracklyNote') || '';
+
+    function saveNote() {
+      localStorage.setItem('tracklyNote', notepad.value);
+      showReaction('📝 Note saved!');
+    }
+
+    function clearNote() {
+      notepad.value = '';
+      localStorage.removeItem('tracklyNote');
+    }
+
+    // Quotes
+    const quotes = [
+      "Believe in yourself and all that you are.",
+      "You are stronger than you think.",
+      "Small steps every day lead to big changes.",
+      "Stay consistent and trust the process.",
+      "You’ve got this! Keep going!"
+    ];
+
+    function newQuote() {
+      const q = quotes[Math.floor(Math.random() * quotes.length)];
+      document.getElementById('quote').innerText = q;
+    }
+
+    // Progress + Streaks
+    let streak = parseInt(localStorage.getItem('streakCount')) || 0;
+    document.getElementById('streakCount').innerText = streak;
+
+    function updateProgress() {
+      let progress = 0;
+      const exerciseDone = localStorage.getItem('exerciseDone') === 'true';
+      if (exerciseDone) progress += 50;
+      if (waterCount >= 8) progress += 50;
+
+      document.getElementById('progressFill').style.width = progress + '%';
+
+      if (progress === 100) {
+        streak++;
+        localStorage.setItem('streakCount', streak);
+        document.getElementById('streakCount').innerText = streak;
+        showReaction(`🔥 Perfect day! Streak: ${streak}`);
+        // Reset daily tasks for next day
+        localStorage.removeItem('exerciseDone');
+        localStorage.setItem('waterCount', 0);
+      }
+    }
+
+    updateProgress();
+  </script></body>
+</html>
